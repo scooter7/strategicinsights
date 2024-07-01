@@ -12,8 +12,12 @@ def load_data_from_github(url):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.content.decode('utf-8')
-        df = pd.read_csv(io.StringIO(data))
-        return df
+        try:
+            df = pd.read_csv(io.StringIO(data), error_bad_lines=False, warn_bad_lines=True)
+            return df
+        except pd.errors.ParserError as e:
+            st.error(f"Parser error: {e}")
+            return None
     else:
         st.error("Error loading the CSV file from GitHub")
         return None

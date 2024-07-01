@@ -24,7 +24,7 @@ def load_data_from_github(url):
 
 def query_csv_with_gpt(prompt, df):
     context = df.to_csv(index=False)
-    response = openai.ChatCompletion.create(
+    response = openai.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},

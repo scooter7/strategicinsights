@@ -44,7 +44,7 @@ def query_csv_with_gpt(prompt, df_summary):
 st.title("Conversational CSV Query App")
 st.write("This app allows you to query a CSV file hosted on GitHub conversationally using OpenAI's GPT-4.")
 
-github_url = "https://github.com/scooter7/strategicinsights/blob/main/docs/csv_data.csv"
+github_url = "https://raw.githubusercontent.com/scooter7/strategicinsights/main/docs/csv_data.csv"
 st.write(f"Fetching data from: {github_url}")
 
 # Load data

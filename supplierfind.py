@@ -7,13 +7,13 @@ import io
 # Set your OpenAI API key using Streamlit secrets
 openai.api_key = st.secrets["openai"]["api_key"]
 
-@st.cache
+@st.cache_data
 def load_data_from_github(url):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.content.decode('utf-8')
         try:
-            df = pd.read_csv(io.StringIO(data), error_bad_lines=False, warn_bad_lines=True)
+            df = pd.read_csv(io.StringIO(data), on_bad_lines='skip')
             return df
         except pd.errors.ParserError as e:
             st.error(f"Parser error: {e}")

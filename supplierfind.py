@@ -22,13 +22,18 @@ def load_data_from_github(url):
         st.error("Error loading the CSV file from GitHub")
         return None
 
-def query_csv_with_gpt(prompt, df):
-    context = df.to_csv(index=False)
+def summarize_csv(df):
+    summary = ""
+    for col in df.columns:
+        summary += f"Column '{col}' has {df[col].nunique()} unique values, some examples: {df[col].dropna().unique()[:3].tolist()}\n"
+    return summary
+
+def query_csv_with_gpt(prompt, df_summary):
     response = openai.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": f"Using the following CSV data:\n\n{context}\n\nAnswer the following question: {prompt}"}
+            {"role": "user", "content": f"Using the following CSV data summary:\n\n{df_summary}\n\nAnswer the following question: {prompt}"}
         ],
         max_tokens=150,
         temperature=0.5,
@@ -49,13 +54,16 @@ if df is not None:
     st.write("CSV Data Preview:")
     st.dataframe(df.head())
 
+    # Generate summary
+    df_summary = summarize_csv(df)
+    
     # User query input
     user_query = st.text_input("Enter your question about the CSV data:")
 
     if st.button("Submit"):
         if user_query:
             with st.spinner("Generating response..."):
-                answer = query_csv_with_gpt(user_query, df)
+                answer = query_csv_with_gpt(user_query, df_summary)
                 st.write("Response:")
                 st.write(answer)
         else:

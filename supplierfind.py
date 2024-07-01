@@ -22,23 +22,28 @@ def load_data_from_github(url):
         st.error("Error loading the CSV file from GitHub")
         return None
 
-def summarize_csv(df):
-    summary = ""
-    for col in df.columns:
-        summary += f"Column '{col}' has {df[col].nunique()} unique values, some examples: {df[col].dropna().unique()[:3].tolist()}\n"
-    return summary
+def chunk_df(df, chunk_size=100):
+    chunks = []
+    num_chunks = len(df) // chunk_size + 1
+    for i in range(num_chunks):
+        chunks.append(df[i*chunk_size:(i+1)*chunk_size])
+    return chunks
 
-def query_csv_with_gpt(prompt, df_summary):
+def query_csv_with_gpt(prompt, df_chunk):
+    context = df_chunk.to_csv(index=False)
     response = openai.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": f"Using the following CSV data summary:\n\n{df_summary}\n\nAnswer the following question: {prompt}"}
+            {"role": "user", "content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
         ],
         max_tokens=150,
         temperature=0.5,
     )
     return response.choices[0].message.content.strip()
+
+def aggregate_responses(responses):
+    return "\n".join(responses)
 
 # Streamlit app UI
 st.title("Conversational CSV Query App")
@@ -54,17 +59,21 @@ if df is not None:
     st.write("CSV Data Preview:")
     st.dataframe(df.head())
 
-    # Generate summary
-    df_summary = summarize_csv(df)
-    
     # User query input
     user_query = st.text_input("Enter your question about the CSV data:")
 
     if st.button("Submit"):
         if user_query:
-            with st.spinner("Generating response..."):
-                answer = query_csv_with_gpt(user_query, df_summary)
+            with st.spinner("Processing data..."):
+                df_chunks = chunk_df(df)
+                responses = []
+                
+                for chunk in df_chunks:
+                    response = query_csv_with_gpt(user_query, chunk)
+                    responses.append(response)
+                
+                aggregated_response = aggregate_responses(responses)
                 st.write("Response:")
-                st.write(answer)
+                st.write(aggregated_response)
         else:
             st.error("Please enter a question.")

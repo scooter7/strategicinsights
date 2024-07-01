@@ -24,15 +24,16 @@ def load_data_from_github(url):
 
 def query_csv_with_gpt(prompt, df):
     context = df.to_csv(index=False)
-    response = openai.Completion.create(
-        engine="gpt-4",
-        prompt=f"Using the following CSV data:\n\n{context}\n\nAnswer the following question: {prompt}",
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": f"Using the following CSV data:\n\n{context}\n\nAnswer the following question: {prompt}"}
+        ],
         max_tokens=150,
-        n=1,
-        stop=None,
         temperature=0.5,
     )
-    return response.choices[0].text.strip()
+    return response['choices'][0]['message']['content'].strip()
 
 # Streamlit app UI
 st.title("Conversational CSV Query App")

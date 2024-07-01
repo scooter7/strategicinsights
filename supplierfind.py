@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import openai
 import requests
+import io
 
 # Set your OpenAI API key using Streamlit secrets
 openai.api_key = st.secrets["openai"]["api_key"]
@@ -11,7 +12,7 @@ def load_data_from_github(url):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.content.decode('utf-8')
-        df = pd.read_csv(pd.compat.StringIO(data))
+        df = pd.read_csv(io.StringIO(data))
         return df
     else:
         st.error("Error loading the CSV file from GitHub")

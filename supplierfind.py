@@ -38,7 +38,7 @@ def query_csv_with_gpt(prompt, df_summary):
         max_tokens=150,
         temperature=0.5,
     )
-    return response['choices'][0]['message']['content'].strip()
+    return response.choices[0].message['content'].strip()
 
 # Streamlit app UI
 st.title("Conversational CSV Query App")

@@ -43,8 +43,17 @@ def query_csv_with_google(prompt, df_chunk):
         {"content": "You are a helpful assistant."},
         {"content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
     ]
+    
     response = genai.chat(messages=messages)
-    return response.messages[1].content.strip()
+    
+    # Print the response to understand its structure
+    st.write("Debug: Full response from Google Gemini:", response)
+    
+    # Access the first message in the response
+    if 'messages' in response and len(response['messages']) > 1:
+        return response['messages'][1]['content'].strip()
+    else:
+        return None
 
 def aggregate_responses(responses, prompt):
     unique_responses = set(responses)

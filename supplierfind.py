@@ -73,8 +73,10 @@ if df is not None:
                 df_chunks = chunk_df(df)
                 responses = []
                 
-                for chunk in df_chunks:
+                for i, chunk in enumerate(df_chunks):
+                    st.write(f"Processing chunk {i+1}/{len(df_chunks)}...")
                     response = query_csv_with_gpt(user_query, chunk)
+                    st.write(f"Chunk {i+1} response: {response}")
                     responses.append(response)
                 
                 aggregated_response = aggregate_responses(responses)

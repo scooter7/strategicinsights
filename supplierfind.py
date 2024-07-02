@@ -48,18 +48,18 @@ def query_csv_with_gpt(prompt, df_chunk):
     )
     return response.choices[0].message['content'].strip()
 
-def clean_response(response):
-    lines = response.split("\n")
-    clean_lines = [line.strip() for line in lines if "Company" in line and "annual sales" in line]
-    return "\n".join(clean_lines)
-
-def aggregate_responses(responses):
-    companies = set()
+def aggregate_responses(responses, prompt):
+    combined_response = ""
+    relevant_info = set()
     for response in responses:
-        cleaned_response = clean_response(response)
-        for line in cleaned_response.split("\n"):
-            companies.add(line)
-    return "\n".join(sorted(companies))
+        for line in response.split("\n"):
+            if line.strip():
+                relevant_info.add(line.strip())
+    if relevant_info:
+        combined_response = "\n".join(sorted(relevant_info))
+    else:
+        combined_response = "No relevant data found in the provided CSV file."
+    return combined_response
 
 # Streamlit app UI
 st.title("Conversational CSV Query App")
@@ -90,11 +90,8 @@ if df is not None:
                     if response:  # Check if the response is not empty
                         responses.append(response)
                 
-                aggregated_response = aggregate_responses(responses)
-                if aggregated_response:
-                    st.write("Response:")
-                    st.write(aggregated_response)
-                else:
-                    st.write("No relevant data found in the provided CSV file.")
+                aggregated_response = aggregate_responses(responses, user_query)
+                st.write("Response:")
+                st.write(aggregated_response)
         else:
             st.error("Please enter a question.")

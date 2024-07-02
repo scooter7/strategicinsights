@@ -3,6 +3,7 @@ import pandas as pd
 import openai
 import requests
 import io
+import re
 
 # Set your OpenAI API key using Streamlit secrets
 openai.api_key = st.secrets["openai"]["api_key"]
@@ -42,16 +43,31 @@ def query_csv_with_gpt(prompt, df_chunk):
     )
     return response.choices[0].message['content'].strip()
 
-def aggregate_responses(responses):
-    aggregated_results = []
-    for response in responses:
-        if response.strip():
-            aggregated_results.append(response.strip())
-    return "\n\n".join(aggregated_results)
+def aggregate_responses(responses, prompt):
+    is_list_query = re.search(r'\b(all|list|which companies|which)\b', prompt, re.IGNORECASE)
+    
+    if is_list_query:
+        aggregated_results = []
+        for response in responses:
+            if response.strip():
+                aggregated_results.append(response.strip())
+        return "\n\n".join(aggregated_results)
+    else:
+        # Find the single highest value response
+        highest_value = 0
+        best_response = ""
+        for response in responses:
+            match = re.search(r'\$(\d+(?:,\d{3})*(?:\.\d{2})?)', response)
+            if match:
+                value = float(match.group(1).replace(',', ''))
+                if value > highest_value:
+                    highest_value = value
+                    best_response = response
+        return best_response if best_response else "No valid responses found."
 
 # Streamlit app UI
-st.title("Conversational CSV Query App")
-st.write("This app allows you to query a CSV file hosted on GitHub conversationally using OpenAI's GPT-3.5-turbo.")
+st.title("Strategic Insights Supplier Match")
+st.write("Find the right supplier!")
 
 github_url = "https://raw.githubusercontent.com/scooter7/strategicinsights/main/docs/csv_data.csv"
 st.write(f"Fetching data from: {github_url}")
@@ -76,7 +92,7 @@ if df is not None:
                     response = query_csv_with_gpt(user_query, chunk)
                     responses.append(response)
                 
-                aggregated_response = aggregate_responses(responses)
+                aggregated_response = aggregate_responses(responses, user_query)
                 st.write("Response:")
                 st.write(aggregated_response)
         else:

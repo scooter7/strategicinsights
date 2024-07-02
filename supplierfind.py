@@ -31,8 +31,8 @@ def chunk_df(df, chunk_size=100):
 
 def query_csv_with_gpt(prompt, df_chunk):
     context = df_chunk.to_csv(index=False)
-    response = openai.chat.completions.create(
-        model="gpt-4",
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
@@ -52,7 +52,7 @@ def aggregate_responses(responses):
 
 # Streamlit app UI
 st.title("Conversational CSV Query App")
-st.write("This app allows you to query a CSV file hosted on GitHub conversationally using OpenAI's GPT-4.")
+st.write("This app allows you to query a CSV file hosted on GitHub conversationally using OpenAI's GPT-3.5-turbo.")
 
 github_url = "https://raw.githubusercontent.com/scooter7/strategicinsights/main/docs/csv_data.csv"
 st.write(f"Fetching data from: {github_url}")

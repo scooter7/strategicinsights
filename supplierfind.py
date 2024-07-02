@@ -38,10 +38,10 @@ def chunk_df(df, chunk_size=100):
 def query_csv_with_google(prompt, df_chunk):
     context = df_chunk.to_csv(index=False)
     messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
+        {"content": "You are a helpful assistant."},
+        {"content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
     ]
-    response = genai.chat(messages=messages)
+    response = genai.generate(messages=messages)
     return response.messages[0].content.strip()
 
 def aggregate_responses(responses, prompt):

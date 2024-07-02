@@ -50,7 +50,7 @@ def query_csv_with_gpt(prompt, df_chunk):
 
 def clean_response(response):
     lines = response.split("\n")
-    clean_lines = [line for line in lines if line.startswith("Company")]
+    clean_lines = [line for line in lines if "Company" in line]
     return "\n".join(clean_lines)
 
 def aggregate_responses(responses):

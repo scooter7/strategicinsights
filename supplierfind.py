@@ -44,7 +44,9 @@ def query_csv_with_gpt(prompt, df_chunk):
 
 def aggregate_responses(responses):
     companies = set()
+    st.write("Debug: Individual responses collected:")
     for response in responses:
+        st.write(response)  # Log individual responses for debugging
         if response:  # Ensure the response is not empty
             for line in response.split("\n"):
                 if line.startswith("Company"):

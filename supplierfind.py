@@ -45,9 +45,10 @@ def query_csv_with_gpt(prompt, df_chunk):
 def aggregate_responses(responses):
     companies = set()
     for response in responses:
-        for line in response.split("\n"):
-            if line.startswith("Company"):
-                companies.add(line)
+        if response:  # Ensure the response is not empty
+            for line in response.split("\n"):
+                if line.startswith("Company"):
+                    companies.add(line)
     return "\n".join(sorted(companies))
 
 # Streamlit app UI
@@ -78,7 +79,10 @@ if df is not None:
                     responses.append(response)
                 
                 aggregated_response = aggregate_responses(responses)
-                st.write("Response:")
-                st.write(aggregated_response)
+                if aggregated_response:
+                    st.write("Response:")
+                    st.write(aggregated_response)
+                else:
+                    st.write("No relevant data found in the provided CSV file.")
         else:
             st.error("Please enter a question.")

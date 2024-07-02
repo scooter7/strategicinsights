@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Set your Google API key using Streamlit secrets
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 @st.cache_data
 def load_data_from_github(url):
@@ -27,7 +27,7 @@ def load_data_from_github(url):
         st.error("Error loading the CSV file from GitHub")
         return None
 
-def chunk_df(df, chunk_size=100):
+def chunk_df(df, chunk_size=50):
     chunks = []
     num_chunks = len(df) // chunk_size + 1
     for i in range(num_chunks):
@@ -36,6 +36,9 @@ def chunk_df(df, chunk_size=100):
 
 def query_csv_with_google(prompt, df_chunk):
     context = df_chunk.to_csv(index=False)
+    if len(context.encode('utf-8')) > 18000:  # Ensure context size is within limit
+        context = context[:18000] + "\n... (truncated)"
+    
     messages = [
         {"content": "You are a helpful assistant."},
         {"content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}

@@ -42,15 +42,17 @@ def query_csv_with_gpt(prompt, df_chunk):
     )
     return response.choices[0].message['content'].strip()
 
+def clean_response(response):
+    lines = response.split("\n")
+    clean_lines = [line for line in lines if not line.startswith("Here is a list of companies") and line.startswith("Company")]
+    return "\n".join(clean_lines)
+
 def aggregate_responses(responses):
     companies = set()
-    st.write("Debug: Individual responses collected:")
     for response in responses:
-        st.write(response)  # Log individual responses for debugging
-        if response:  # Ensure the response is not empty
-            for line in response.split("\n"):
-                if line.startswith("Company"):
-                    companies.add(line)
+        cleaned_response = clean_response(response)
+        for line in cleaned_response.split("\n"):
+            companies.add(line)
     return "\n".join(sorted(companies))
 
 # Streamlit app UI

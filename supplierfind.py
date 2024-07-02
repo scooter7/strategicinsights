@@ -40,10 +40,15 @@ def query_csv_with_gpt(prompt, df_chunk):
         max_tokens=150,
         temperature=0.5,
     )
-    return response.choices[0].message.content.strip()
+    return response.choices[0].message['content'].strip()
 
 def aggregate_responses(responses):
-    return "\n".join(responses)
+    companies = set()
+    for response in responses:
+        for line in response.split("\n"):
+            if line.startswith("Company"):
+                companies.add(line)
+    return "Here are the companies with a revenue classification of Class 4:\n" + "\n".join(sorted(companies))
 
 # Streamlit app UI
 st.title("Conversational CSV Query App")

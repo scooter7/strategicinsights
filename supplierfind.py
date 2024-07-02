@@ -40,15 +40,14 @@ def query_csv_with_gpt(prompt, df_chunk):
         max_tokens=150,
         temperature=0.5,
     )
-    return response.choices[0].message['content'].strip()
+    return response.choices[0].message.content.strip()
 
 def aggregate_responses(responses):
     companies = set()
     for response in responses:
-        if response:  # Ensure the response is not empty
-            for line in response.split("\n"):
-                if line.startswith("Company"):
-                    companies.add(line)
+        for line in response.split("\n"):
+            if line.startswith("Company"):
+                companies.add(line)
     return "\n".join(sorted(companies))
 
 # Streamlit app UI

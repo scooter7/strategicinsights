@@ -1,4 +1,9 @@
 streamlit
 pandas
-openai==0.28
 requests
+google-generativeai
+langchain
+langchain_community
+langchain-google-genai
+faiss-cpu
+python-dotenv

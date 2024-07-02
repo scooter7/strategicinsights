@@ -1,16 +1,11 @@
-import os
-import io
-import requests
 import streamlit as st
 import pandas as pd
-import google.generativeai as genai
-from dotenv import load_dotenv
+import openai
+import requests
+import io
 
-# Load environment variables
-load_dotenv()
-
-# Set your Google API key using Streamlit secrets
-genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+# Set your OpenAI API key using Streamlit secrets
+openai.api_key = st.secrets["openai"]["api_key"]
 
 @st.cache_data
 def load_data_from_github(url):
@@ -27,41 +22,37 @@ def load_data_from_github(url):
         st.error("Error loading the CSV file from GitHub")
         return None
 
-def chunk_df(df, chunk_size=50):
+def chunk_df(df, chunk_size=100):
     chunks = []
     num_chunks = len(df) // chunk_size + 1
     for i in range(num_chunks):
         chunks.append(df[i*chunk_size:(i+1)*chunk_size])
     return chunks
 
-def query_csv_with_google(prompt, df_chunk):
+def query_csv_with_gpt(prompt, df_chunk):
     context = df_chunk.to_csv(index=False)
-    if len(context.encode('utf-8')) > 18000:  # Ensure context size is within limit
-        context = context[:18000] + "\n... (truncated)"
-    
-    messages = [
-        {"content": "You are a helpful assistant."},
-        {"content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
-    ]
-    
-    response = genai.chat(messages=messages)
-    
-    # Print the response to understand its structure
-    st.write("Debug: Full response from Google Gemini:", response)
-    
-    # Access the first message in the response
-    if hasattr(response, 'messages') and len(response.messages) > 1:
-        return response.messages[1].content.strip()
-    else:
-        return None
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
+        ],
+        max_tokens=150,
+        temperature=0.5,
+    )
+    return response.choices[0].message['content'].strip()
 
-def aggregate_responses(responses, prompt):
-    unique_responses = set(responses)
-    return f"Here is the consolidated answer for the prompt '{prompt}':\n" + "\n".join(unique_responses)
+def aggregate_responses(responses):
+    companies = set()
+    for response in responses:
+        for line in response.split("\n"):
+            if line.startswith("Company"):
+                companies.add(line)
+    return "Here are the companies with a revenue classification of Class 4:\n" + "\n".join(sorted(companies))
 
 # Streamlit app UI
 st.title("Conversational CSV Query App")
-st.write("This app allows you to query a CSV file hosted on GitHub conversationally using Google Gemini.")
+st.write("This app allows you to query a CSV file hosted on GitHub conversationally using OpenAI's GPT-3.5-turbo.")
 
 github_url = "https://raw.githubusercontent.com/scooter7/strategicinsights/main/docs/csv_data.csv"
 st.write(f"Fetching data from: {github_url}")
@@ -82,12 +73,13 @@ if df is not None:
                 df_chunks = chunk_df(df)
                 responses = []
                 
-                for chunk in df_chunks:
-                    response = query_csv_with_google(user_query, chunk)
-                    if response:  # Check if the response is not empty
-                        responses.append(response)
+                for i, chunk in enumerate(df_chunks):
+                    st.write(f"Processing chunk {i+1}/{len(df_chunks)}...")
+                    response = query_csv_with_gpt(user_query, chunk)
+                    st.write(f"Chunk {i+1} response: {response}")
+                    responses.append(response)
                 
-                aggregated_response = aggregate_responses(responses, user_query)
+                aggregated_response = aggregate_responses(responses)
                 st.write("Response:")
                 st.write(aggregated_response)
         else:

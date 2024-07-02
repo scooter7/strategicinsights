@@ -50,8 +50,8 @@ def query_csv_with_google(prompt, df_chunk):
     st.write("Debug: Full response from Google Gemini:", response)
     
     # Access the first message in the response
-    if 'messages' in response and len(response['messages']) > 1:
-        return response['messages'][1]['content'].strip()
+    if hasattr(response, 'messages') and len(response.messages) > 1:
+        return response.messages[1].content.strip()
     else:
         return None
 

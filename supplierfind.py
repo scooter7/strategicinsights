@@ -70,7 +70,7 @@ st.title("Strategic Insights Supplier Search")
 st.write("Search our suppliers!")
 
 github_url = "https://raw.githubusercontent.com/scooter7/strategicinsights/main/docs/csv_data.csv"
-st.write(f"Fetching data from: {github_url}")
+
 
 # Load data
 df = load_data_from_github(github_url)

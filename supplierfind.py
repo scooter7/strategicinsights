@@ -66,8 +66,8 @@ def aggregate_responses(responses, prompt):
         return best_response if best_response else "No valid responses found."
 
 # Streamlit app UI
-st.title("Conversational CSV Query App")
-st.write("This app allows you to query a CSV file hosted on GitHub conversationally using OpenAI's GPT-3.5-turbo.")
+st.title("Strategic Insights Supplier Search")
+st.write("Search our suppliers!")
 
 github_url = "https://raw.githubusercontent.com/scooter7/strategicinsights/main/docs/csv_data.csv"
 st.write(f"Fetching data from: {github_url}")

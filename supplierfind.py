@@ -40,7 +40,7 @@ def query_csv_with_gpt(prompt, df_chunk):
         max_tokens=150,
         temperature=0.5,
     )
-    return response.choices[0].message.content.strip()
+    return response.choices[0].message['content'].strip()
 
 def aggregate_responses(responses):
     companies = set()
@@ -48,7 +48,7 @@ def aggregate_responses(responses):
         for line in response.split("\n"):
             if line.startswith("Company"):
                 companies.add(line)
-    return "\n".join(sorted(companies))
+    return "Here are the companies with a revenue classification of Class 4:\n" + "\n".join(sorted(companies))
 
 # Streamlit app UI
 st.title("Conversational CSV Query App")
@@ -73,15 +73,14 @@ if df is not None:
                 df_chunks = chunk_df(df)
                 responses = []
                 
-                for chunk in df_chunks:
+                for i, chunk in enumerate(df_chunks):
+                    st.write(f"Processing chunk {i+1}/{len(df_chunks)}...")
                     response = query_csv_with_gpt(user_query, chunk)
+                    st.write(f"Chunk {i+1} response: {response}")
                     responses.append(response)
                 
                 aggregated_response = aggregate_responses(responses)
-                if aggregated_response:
-                    st.write("Response:")
-                    st.write(aggregated_response)
-                else:
-                    st.write("No relevant data found in the provided CSV file.")
+                st.write("Response:")
+                st.write(aggregated_response)
         else:
             st.error("Please enter a question.")

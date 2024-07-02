@@ -1,17 +1,16 @@
+import os
+import io
+import requests
 import streamlit as st
 import pandas as pd
-import requests
-import io
-import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables
 load_dotenv()
 
-# Set your Google API key
-api_key = os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=api_key)
+# Set your Google API key using Streamlit secrets
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 @st.cache_data
 def load_data_from_github(url):
@@ -41,8 +40,8 @@ def query_csv_with_google(prompt, df_chunk):
         {"content": "You are a helpful assistant."},
         {"content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
     ]
-    response = genai.generate(messages=messages)
-    return response.messages[0].content.strip()
+    response = genai.chat(messages=messages)
+    return response.messages[1].content.strip()
 
 def aggregate_responses(responses, prompt):
     unique_responses = set(responses)

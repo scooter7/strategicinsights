@@ -11,9 +11,9 @@ openai.api_key = st.secrets["openai"]["api_key"]
 def load_data_from_github(url):
     response = requests.get(url)
     if response.status_code == 200:
-        data = response.content.decode('utf-8', errors='replace')
+        data = response.content.decode('utf-8', errors='ignore')
         try:
-            df = pd.read_csv(io.StringIO(data), on_bad_lines='skip', encoding='utf-8')
+            df = pd.read_csv(io.StringIO(data), on_bad_lines='skip')
             return df
         except pd.errors.ParserError as e:
             st.error(f"Parser error: {e}")
@@ -21,6 +21,12 @@ def load_data_from_github(url):
     else:
         st.error("Error loading the CSV file from GitHub")
         return None
+
+def clean_dataframe(df):
+    df.columns = df.columns.str.strip()
+    for col in df.select_dtypes(['object']).columns:
+        df[col] = df[col].str.strip().replace({'\n': ' ', '\r': ' '}, regex=True)
+    return df
 
 def chunk_df(df, chunk_size=100):
     chunks = []
@@ -31,7 +37,6 @@ def chunk_df(df, chunk_size=100):
 
 def query_csv_with_gpt(prompt, df_chunk):
     context = df_chunk.to_csv(index=False)
-    st.write(f"Debug: Sending the following data chunk to GPT-3.5-turbo:\n{context}")
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -41,7 +46,6 @@ def query_csv_with_gpt(prompt, df_chunk):
         max_tokens=150,
         temperature=0.5,
     )
-    st.write(f"Debug: Response from GPT-3.5-turbo:\n{response.choices[0].message['content'].strip()}")
     return response.choices[0].message['content'].strip()
 
 def clean_response(response):
@@ -51,11 +55,8 @@ def clean_response(response):
 
 def aggregate_responses(responses):
     companies = set()
-    st.write("Debug: Aggregating responses:")
     for response in responses:
-        st.write(f"Debug: Individual response:\n{response}")  # Log individual responses for debugging
         cleaned_response = clean_response(response)
-        st.write(f"Debug: Cleaned response:\n{cleaned_response}")
         for line in cleaned_response.split("\n"):
             companies.add(line)
     return "\n".join(sorted(companies))
@@ -71,6 +72,7 @@ st.write(f"Fetching data from: {github_url}")
 df = load_data_from_github(github_url)
 
 if df is not None:
+    df = clean_dataframe(df)
     st.write("CSV Data Preview:")
     st.dataframe(df.head())
 

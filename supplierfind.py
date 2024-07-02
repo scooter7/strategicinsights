@@ -11,9 +11,9 @@ openai.api_key = st.secrets["openai"]["api_key"]
 def load_data_from_github(url):
     response = requests.get(url)
     if response.status_code == 200:
-        data = response.content.decode('utf-8')
+        data = response.content.decode('utf-8', errors='replace')
         try:
-            df = pd.read_csv(io.StringIO(data), on_bad_lines='skip')
+            df = pd.read_csv(io.StringIO(data), on_bad_lines='skip', encoding='utf-8')
             return df
         except pd.errors.ParserError as e:
             st.error(f"Parser error: {e}")
@@ -31,7 +31,6 @@ def chunk_df(df, chunk_size=100):
 
 def query_csv_with_gpt(prompt, df_chunk):
     context = df_chunk.to_csv(index=False)
-    st.write(f"Debug: Sending the following data chunk to GPT-3.5-turbo:\n{context}")
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -41,19 +40,17 @@ def query_csv_with_gpt(prompt, df_chunk):
         max_tokens=150,
         temperature=0.5,
     )
-    st.write(f"Debug: Response from GPT-3.5-turbo:\n{response.choices[0].message['content'].strip()}")
     return response.choices[0].message['content'].strip()
 
 def clean_response(response):
     lines = response.split("\n")
-    clean_lines = [line for line in lines if not line.startswith("Here is a list of companies") and line.startswith("Company")]
+    clean_lines = [line for line in lines if line.startswith("Company")]
     return "\n".join(clean_lines)
 
 def aggregate_responses(responses):
     companies = set()
     for response in responses:
         cleaned_response = clean_response(response)
-        st.write(f"Debug: Cleaned response:\n{cleaned_response}")
         for line in cleaned_response.split("\n"):
             companies.add(line)
     return "\n".join(sorted(companies))

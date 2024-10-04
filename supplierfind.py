@@ -39,7 +39,7 @@ def query_csv_with_gpt(prompt, df_chunk):
             {"role": "user", "content": f"Using the following CSV data chunk:\n\n{context}\n\nAnswer the following question: {prompt}"}
         ],
         max_tokens=150,
-        temperature=0.5,
+        temperature=0,
     )
     return response.choices[0].message['content'].strip()
 
